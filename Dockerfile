@@ -44,7 +44,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 RUN composer install --no-dev --optimize-autoloader
 
-# Ajustar permissões do Laravel
+# Ajustar permissões do Laravel teste
 RUN chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 9000
