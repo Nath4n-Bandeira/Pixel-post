@@ -5,12 +5,12 @@ FROM node:18 AS node-builder
 
 WORKDIR /app
 
-# Copia apenas arquivos que afetam o frontend
-COPY package*.json vite.config.js ./
-COPY resources ./resources
-COPY tailwind.config.js postcss.config.js ./
-
+COPY package*.json ./
 RUN npm install
+
+COPY resources ./resources
+COPY vite.config.js ./
+
 RUN npm run build
 
 
