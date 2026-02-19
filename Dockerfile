@@ -1,61 +1,57 @@
-# ------------------------------
-# Build dos assets com Node
-# ------------------------------
+# ------------------------------------------------------------
+# Etapa 1: Build dos assets com Node
+# ------------------------------------------------------------
 FROM node:18 AS node-builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+# Copia apenas arquivos que afetam o frontend
+COPY package*.json vite.config.js ./
+COPY resources ./resources
+COPY tailwind.config.js postcss.config.js ./
 
-COPY . .
+RUN npm install
 RUN npm run build
 
 
-# ------------------------------
-# Build do Laravel / PHP
-# ------------------------------
+# ------------------------------------------------------------
+# Etapa 2: Build do Laravel
+# ------------------------------------------------------------
 FROM php:8.2-fpm AS php-builder
 
-# Instala dependências do sistema
 RUN apt-get update && apt-get install -y \
-    libpng-dev libonig-dev libxml2-dev zip unzip curl git \
+    zip unzip git curl libpng-dev libonig-dev libxml2-dev \
     && docker-php-ext-install pdo pdo_mysql mbstring gd
 
-# Instala Composer
+# Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-WORKDIR /app
+WORKDIR /var/www/html
 
-COPY composer*.json ./
+COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --optimize-autoloader
 
+# Copia TODO o projeto agora
 COPY . .
 
-# Copia assets que foram construídos no node-builder
+# Copia build do Node para o Laravel
 COPY --from=node-builder /app/public/build public/build
 
-# Gera APP_KEY
-RUN cp .env.example .env && php artisan key:generate
-
-# Otimizações de produção
+RUN cp .env.example .env
+RUN php artisan key:generate
 RUN php artisan config:cache
 RUN php artisan route:cache
 RUN php artisan view:cache
 
 
-# ------------------------------
-# Container final (Nginx + PHP-FPM)
-# ------------------------------
+# ------------------------------------------------------------
+# Container final: NGINX + PHP-FPM
+# ------------------------------------------------------------
 FROM nginx:stable
 
-COPY --from=php-builder /app /var/www/html
+COPY --from=php-builder /var/www/html /var/www/html
 
-# Copia configuração do nginx
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
-
-# Permissões
-RUN chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 80
 
