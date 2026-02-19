@@ -1,58 +1,52 @@
-# ------------------------------------------------------------
-# Etapa 1: Build dos assets com Node
-# ------------------------------------------------------------
+# ============================
+# 1) NODE BUILDER – Build do Vite/Tailwind
+# ============================
 FROM node:18 AS node-builder
 
 WORKDIR /app
 
+# Copiar configs essenciais
 COPY package*.json ./
+COPY tailwind.config.js postcss.config.js vite.config.js ./
+
+# Instalar dependências
 RUN npm install
 
+# Copiar apenas os assets
 COPY resources ./resources
-COPY vite.config.js ./
 
+# Build do Vite
 RUN npm run build
 
 
-# ------------------------------------------------------------
-# Etapa 2: Build do Laravel
-# ------------------------------------------------------------
-FROM php:8.2-fpm AS php-builder
 
+# ============================
+# 2) PHP RUNNER – Laravel + Nginx
+# ============================
+FROM php:8.2-fpm
+
+# Instalar extensões necessárias do Laravel
 RUN apt-get update && apt-get install -y \
-    zip unzip git curl libpng-dev libonig-dev libxml2-dev \
-    && docker-php-ext-install pdo pdo_mysql mbstring gd
-
-# Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+    zip unzip git libpng-dev libonig-dev libxml2-dev libzip-dev \
+    && docker-php-ext-install pdo pdo_mysql gd zip
 
 WORKDIR /var/www/html
 
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-interaction --optimize-autoloader
-
-# Copia TODO o projeto agora
+# Copiar arquivos do Laravel
 COPY . .
 
-# Copia build do Node para o Laravel
-COPY --from=node-builder /app/public/build public/build
+# Copiar build gerado pelo Node para public/
+COPY --from=node-builder /app/resources ./resources
+COPY --from=node-builder /app/public/build ./public/build
 
-RUN cp .env.example .env
-RUN php artisan key:generate
-RUN php artisan config:cache
-RUN php artisan route:cache
-RUN php artisan view:cache
+# Instalar composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+RUN composer install --no-dev --optimize-autoloader
 
-# ------------------------------------------------------------
-# Container final: NGINX + PHP-FPM
-# ------------------------------------------------------------
-FROM nginx:stable
+# Ajustar permissões do Laravel
+RUN chown -R www-data:www-data storage bootstrap/cache
 
-COPY --from=php-builder /var/www/html /var/www/html
+EXPOSE 9000
 
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["php-fpm"]
