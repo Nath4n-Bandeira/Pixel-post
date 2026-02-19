@@ -1,23 +1,26 @@
 services:
   - type: web
     name: pixel-post
-    env: docker
+    runtime: php
+    region: oregon
     plan: free
-    dockerfilePath: ./Dockerfile
-    buildCommand: ""
-    startCommand: ""
+    buildCommand: |
+      composer install --no-dev --optimize-autoloader
+      npm install
+      npm run build
+    startCommand: php artisan serve --host=0.0.0.0 --port=10000
     envVars:
       - key: APP_ENV
         value: production
-
       - key: APP_DEBUG
         value: false
-      
       - key: APP_KEY
         generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pixel-post-db
+          property: connectionString
 
-      - key: DB_CONNECTION
-        value: sqlite
-
-      - key: DB_DATABASE
-        value: /var/www/html/database/database.sqlite
+databases:
+  - name: pixel-post-db
+    plan: free

@@ -25,17 +25,19 @@ COPY public ./public
 RUN npm run build
 
 # ============================
-# 2) PHP RUNNER – Laravel + Nginx
+# 2) PHP RUNNER – Laravel
 # ============================
-FROM php:8.2-fpm
+FROM php:8.2-apache
 
 # Instalar extensões necessárias do Laravel
 RUN apt-get update && apt-get install -y \
     zip unzip git libpng-dev libonig-dev libxml2-dev libzip-dev \
-    nginx \
     && docker-php-ext-install pdo pdo_mysql gd zip
 
 WORKDIR /var/www/html
+
+# Habilitar mod_rewrite do Apache
+RUN a2enmod rewrite
 
 # Copiar arquivos do Laravel
 COPY . .
@@ -54,14 +56,6 @@ RUN composer install --no-dev --optimize-autoloader
 RUN chown -R www-data:www-data storage bootstrap/cache public
 RUN chmod -R 755 storage bootstrap/cache public
 
-# Configurar nginx
-COPY nginx.conf /etc/nginx/nginx.conf
-
 EXPOSE 80
 
-# Script de entrada para iniciar PHP-FPM e Nginx
-RUN echo '#!/bin/sh\n\
-php-fpm -D\n\
-nginx -g "daemon off;"' > /start.sh && chmod +x /start.sh
-
-CMD ["/start.sh"]
+CMD ["apache2-foreground"]
