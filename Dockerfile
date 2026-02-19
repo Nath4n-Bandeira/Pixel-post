@@ -26,7 +26,7 @@ RUN npm ci
 RUN npm run build
 
 # 3) Final image: PHP + Apache
-FROM php:8.2-apache
+FROM php:8.4-apache
 RUN apt-get update && apt-get install -y \
     libzip-dev zip unzip git zlib1g-dev libpng-dev libonig-dev libjpeg-dev libxml2-dev && \
     docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd && \
