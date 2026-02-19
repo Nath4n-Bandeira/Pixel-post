@@ -10,6 +10,13 @@ if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
   fi
   chown www-data:www-data "$DB_FILE" || true
   chmod 664 "$DB_FILE" || true
+  # Import any local SQL dumps into sqlite
+  for sql in /var/www/html/database/*.sql; do
+    if [ -f "$sql" ]; then
+      echo "Importing $sql into $DB_FILE"
+      sqlite3 "$DB_FILE" < "$sql" || echo "Warning: failed to import $sql"
+    fi
+  done
 fi
 
 # Generate app key if missing
