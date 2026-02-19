@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -e
+
+# If using sqlite, ensure the DB file exists and is writable
+if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
+  DB_FILE=/var/www/html/database/database.sqlite
+  mkdir -p "$(dirname "$DB_FILE")"
+  if [ ! -f "$DB_FILE" ]; then
+    touch "$DB_FILE"
+  fi
+  chown www-data:www-data "$DB_FILE" || true
+  chmod 664 "$DB_FILE" || true
+fi
+
+# Generate app key if missing
+if [ -z "${APP_KEY:-}" ]; then
+  php artisan key:generate --force || true
+fi
+
+# Run migrations
+php artisan migrate --force || true
+
+# Cache configs for performance
+php artisan config:cache || true
+php artisan route:cache || true
+php artisan view:cache || true
+
+# Start Apache (exec to keep PID 1)
+exec apache2-foreground
