@@ -23,7 +23,7 @@ if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
 fi
 
 # Ensure all storage directories exist with correct permissions
-mkdir -p /var/www/html/storage/framework/{views,cache/data,sessions} /var/www/html/storage/logs /var/www/html/bootstrap/cache
+mkdir -p /var/www/html/storage/framework/{views,cache/data,sessions} /var/www/html/storage/logs /var/www/html/storage/app/public /var/www/html/bootstrap/cache
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database || true
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database || true
 
@@ -31,6 +31,9 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/d
 if [ -z "${APP_KEY:-}" ]; then
   php artisan key:generate --force || true
 fi
+
+# Create storage symlink for public file access
+php artisan storage:link || true
 
 # Run migrations
 php artisan migrate --force || true
