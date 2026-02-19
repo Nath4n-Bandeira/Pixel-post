@@ -5,6 +5,11 @@ FROM node:18 AS node-builder
 
 WORKDIR /build
 
+# Instalar dependências de build (necessário para Tailwind v4 com oxide)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential python3 pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copiar configs essenciais
 COPY package*.json ./
 COPY tailwind.config.js vite.config.js ./
@@ -13,6 +18,10 @@ COPY tailwind.config.js vite.config.js ./
 RUN if [ ! -f postcss.config.js ]; then \
     echo "module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } }" > postcss.config.js; \
     fi
+
+# Ajustar variáveis de ambiente para linking nativo
+ENV LD_LIBRARY_PATH=/usr/local/lib
+ENV LDFLAGS="-Wl,--rpath,/usr/local/lib"
 
 # Instalar dependências
 RUN npm ci
