@@ -13,7 +13,9 @@ COPY ./routes ./routes
 COPY ./public ./public
 COPY artisan ./
 # Ensure storage and cache directories exist for later chown/permissions
-RUN mkdir -p public storage bootstrap/cache || true
+RUN mkdir -p public storage bootstrap/cache database || true
+# Create sqlite file for environments using sqlite
+RUN touch database/database.sqlite && chmod 664 database/database.sqlite || true
 RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 
 # 2) Node stage: build front-end assets
@@ -28,8 +30,8 @@ RUN npm run build
 # 3) Final image: PHP + Apache
 FROM php:8.4-apache
 RUN apt-get update && apt-get install -y \
-    libzip-dev zip unzip git zlib1g-dev libpng-dev libonig-dev libjpeg-dev libxml2-dev && \
-    docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd && \
+    libzip-dev zip unzip git zlib1g-dev libpng-dev libonig-dev libjpeg-dev libxml2-dev libsqlite3-dev && \
+    docker-php-ext-install pdo pdo_mysql pdo_sqlite mbstring exif pcntl bcmath gd && \
     rm -rf /var/lib/apt/lists/*
 
 # Enable Apache rewrite module
