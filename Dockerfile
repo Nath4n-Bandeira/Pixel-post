@@ -17,7 +17,7 @@ RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interacti
 FROM node:18 as node_builder
 WORKDIR /app
 COPY package.json package-lock.json* ./
-COPY vite.config.js tailwind.config.js postcss.config.js ./
+COPY vite.config.js tailwind.config.js ./
 COPY resources ./resources
 RUN npm ci
 RUN npm run build
