@@ -39,6 +39,12 @@ services:
         fromDatabase:
           name: pixel-post-db
           property: password
+      - key: SESSION_SECURE_COOKIE
+        value: "false"
+      - key: SESSION_DRIVER
+        value: file
+      - key: APP_URL
+        value: https://pixel-post-3l7p.onrender.com
 
 databases:
   - name: pixel-post-db

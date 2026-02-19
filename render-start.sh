@@ -17,6 +17,9 @@ if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
       sqlite3 "$DB_FILE" < "$sql" || echo "Warning: failed to import $sql"
     fi
   done
+  # Use file-based sessions for SQLite to avoid 419 CSRF errors
+  export SESSION_DRIVER=file
+  echo "Using file-based sessions for SQLite environment"
 fi
 
 # Generate app key if missing
