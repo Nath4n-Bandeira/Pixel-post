@@ -14,7 +14,7 @@ COPY artisan ./
 RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 
 # 2) Node stage: build front-end assets
-FROM node:18 as node_builder
+FROM node:20 as node_builder
 WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY vite.config.js tailwind.config.js ./
