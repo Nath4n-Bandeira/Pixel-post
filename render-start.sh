@@ -22,6 +22,11 @@ if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
   echo "Using file-based sessions for SQLite environment"
 fi
 
+# Ensure all storage directories exist with correct permissions
+mkdir -p /var/www/html/storage/framework/{views,cache/data,sessions} /var/www/html/storage/logs /var/www/html/bootstrap/cache
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database || true
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database || true
+
 # Generate app key if missing
 if [ -z "${APP_KEY:-}" ]; then
   php artisan key:generate --force || true

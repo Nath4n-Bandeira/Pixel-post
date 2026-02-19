@@ -49,9 +49,9 @@ COPY render-start.sh /usr/local/bin/render-start.sh
 RUN chmod +x /usr/local/bin/render-start.sh
 
 ## Ensure necessary runtime directories exist and have correct permissions
-RUN mkdir -p /var/www/html/storage/framework/views /var/www/html/storage/framework/cache/data /var/www/html/storage/logs /var/www/html/bootstrap/cache || true
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache || true
+RUN mkdir -p /var/www/html/storage/framework/views /var/www/html/storage/framework/cache/data /var/www/html/storage/framework/sessions /var/www/html/storage/logs /var/www/html/bootstrap/cache || true
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database || true
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database || true
 
 # Serve from public directory
 RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
