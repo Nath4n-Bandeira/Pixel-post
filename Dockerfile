@@ -42,8 +42,10 @@ COPY --from=composer_builder /app /var/www/html
 # Copy built assets from node stage
 COPY --from=node_builder /app/public /var/www/html/public
 
-# Ensure correct permissions
+## Ensure necessary runtime directories exist and have correct permissions
+RUN mkdir -p /var/www/html/storage/framework/views /var/www/html/storage/framework/cache/data /var/www/html/storage/logs /var/www/html/bootstrap/cache || true
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache || true
 
 # Serve from public directory
 RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
