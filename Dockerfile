@@ -10,7 +10,10 @@ COPY ./config ./config
 COPY ./database ./database
 COPY ./resources ./resources
 COPY ./routes ./routes
+COPY ./public ./public
 COPY artisan ./
+# Ensure storage and cache directories exist for later chown/permissions
+RUN mkdir -p public storage bootstrap/cache || true
 RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 
 # 2) Node stage: build front-end assets
