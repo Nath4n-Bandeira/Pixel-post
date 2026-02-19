@@ -1,10 +1,14 @@
 services:
   - type: web
-    name: pixel-post
-    runtime: php
-    runtimeVersion: 8.2
-    buildCommand: bash build.sh
-    startCommand: vendor/bin/heroku-php-apache2 public/
-    disk:
-      - name: data
-        mountPath: /var/data
+    name: pixel-post-api
+    env: php
+    root: .
+    buildCommand: |
+      composer install --no-interaction --prefer-dist
+      cp .env.example .env
+      php artisan key:generate
+      npm install
+      npm run build
+    startCommand: |
+      php artisan migrate --force
+      php artisan serve --host=0.0.0.0 --port=$PORT
