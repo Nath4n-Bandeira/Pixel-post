@@ -24,8 +24,11 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY vite.config.js tailwind.config.js ./
 COPY resources ./resources
+COPY public ./public
 RUN npm ci
 RUN npm run build
+# Ensure public directories exist for COPY in final stage
+RUN mkdir -p /app/public/dist /app/public
 
 # 3) Final image: PHP + Apache
 FROM php:8.4-apache
@@ -44,9 +47,8 @@ WORKDIR /var/www/html
 # Copy all application code from composer stage
 COPY --from=composer_builder /app /var/www/html
 
-# Copy built assets from node stage
-COPY --from=node_builder /app/public/js /var/www/html/public/js
-COPY --from=node_builder /app/public/css /var/www/html/public/css
+# Copy built assets from node stage (overwrite with compiled assets)
+COPY --from=node_builder /app/public /var/www/html/public
 
 # Copy configuration and environment files
 COPY .env.example /var/www/html/.env
