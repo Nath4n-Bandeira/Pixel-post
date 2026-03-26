@@ -1,33 +1,44 @@
 #!/usr/bin/env bash
 set -e
 
-echo "Starting Pixel Post application..."
+echo "🚀 Starting Pixel Post application..."
 
-# Ensure all storage directories exist with correct permissions
-mkdir -p /var/www/html/storage/framework/{views,cache/data,sessions} /var/www/html/storage/logs /var/www/html/storage/app/public /var/www/html/bootstrap/cache
+# Ensure storage directories with correct permissions
+echo "📁 Setting up directories..."
+mkdir -p /var/www/html/storage/framework/{views,cache/data,sessions} /var/www/html/storage/{logs,app/public} /var/www/html/bootstrap/cache
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database || true
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database || true
 
-# Generate app key if missing
-if [ -z "${APP_KEY:-}" ]; then
-  echo "Generating APP_KEY..."
-  php artisan key:generate --force || true
+# Ensure .env file exists
+if [ ! -f /var/www/html/.env ]; then
+  echo "📝 Creating .env from .env.example..."
+  cp /var/www/html/.env.example /var/www/html/.env
+fi
+
+# Generate APP_KEY only if not already set
+if [ -z "${APP_KEY}" ]; then
+  echo "🔑 Generating APP_KEY..."
+  php /var/www/html/artisan key:generate --force || echo "⚠️  Failed to generate APP_KEY"
+else
+  echo "✓ APP_KEY already set"
 fi
 
 # Create storage symlink for public file access
-echo "Creating storage symlink..."
-php artisan storage:link || true
+echo "🔗 Creating storage symlink..."
+php /var/www/html/artisan storage:link --force || true
 
-# Run migrations
-echo "Running database migrations..."
-php artisan migrate --force || true
+# Run database migrations
+echo "🗄️  Running database migrations..."
+php /var/www/html/artisan migrate --force 2>&1 || echo "⚠️  Warning: Migration completed with warnings"
 
-# Cache configs for performance
-echo "Caching configurations..."
-php artisan config:cache || true
-php artisan route:cache || true
-php artisan view:cache || true
+# Cache configurations for performance
+echo "⚡ Caching configurations..."
+php /var/www/html/artisan config:cache || true
+php /var/www/html/artisan route:cache || true
+php /var/www/html/artisan view:cache || true
 
-echo "Starting Apache..."
+echo "✓ Application ready!"
+echo "🌐 Starting Apache..."
+
 # Start Apache (exec to keep PID 1)
 exec apache2-foreground

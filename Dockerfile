@@ -30,31 +30,42 @@ RUN npm run build
 # 3) Final image: PHP + Apache
 FROM php:8.4-apache
 RUN apt-get update && apt-get install -y \
-    libzip-dev zip unzip git zlib1g-dev libpng-dev libonig-dev libjpeg-dev libxml2-dev libsqlite3-dev sqlite3 libpq-dev && \
-    docker-php-ext-install pdo pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd && \
+    libzip-dev zip unzip git zlib1g-dev libpng-dev libonig-dev libjpeg-dev libxml2-dev libsqlite3-dev sqlite3 libpq-dev postgresql-client && \
+    docker-php-ext-install pdo pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd zip && \
+    docker-php-ext-enable pdo_pgsql && \
     rm -rf /var/lib/apt/lists/*
 
-# Enable Apache rewrite module
-RUN a2enmod rewrite
+# Enable Apache modules
+RUN a2enmod rewrite headers env
 
-# Copy application code from composer stage
+# Set working directory
 WORKDIR /var/www/html
+
+# Copy all application code from composer stage
 COPY --from=composer_builder /app /var/www/html
 
 # Copy built assets from node stage
-COPY --from=node_builder /app/public /var/www/html/public
+COPY --from=node_builder /app/public/js /var/www/html/public/js
+COPY --from=node_builder /app/public/css /var/www/html/public/css
 
-# Copy render start script
+# Copy configuration and environment files
+COPY .env.example /var/www/html/.env
 COPY render-start.sh /usr/local/bin/render-start.sh
 RUN chmod +x /usr/local/bin/render-start.sh
 
-## Ensure necessary runtime directories exist and have correct permissions
-RUN mkdir -p /var/www/html/storage/framework/views /var/www/html/storage/framework/cache/data /var/www/html/storage/framework/sessions /var/www/html/storage/logs /var/www/html/bootstrap/cache || true
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database || true
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database || true
+# Ensure necessary runtime directories exist and have correct permissions
+RUN mkdir -p /var/www/html/storage/framework/{views,cache/data,sessions} && \
+    mkdir -p /var/www/html/storage/{logs,app/public} && \
+    mkdir -p /var/www/html/bootstrap/cache && \
+    chown -R www-data:www-data /var/www/html && \
+    chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
 
-# Serve from public directory
-RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+# Configure Apache
+RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf && \
+    echo "ServerName localhost" >> /etc/apache2/apache2.conf
+
+# Set proper permissions for www-data
+RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
 ENTRYPOINT ["/usr/local/bin/render-start.sh"]
