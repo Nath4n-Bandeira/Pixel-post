@@ -16,38 +16,54 @@ services:
       - key: APP_KEY
         generateValue: true
       - key: APP_URL
-        sync: false
+        value: https://pixel-post.onrender.com
+      
+      # PostgreSQL Neon Configuration
       - key: DB_CONNECTION
-        value: mysql
+        value: pgsql
       - key: DB_HOST
-        fromDatabase:
-          name: pixel-post-db
-          property: host
+        value: ep-tight-surf-a8wjxpjy-pooler.eastus2.azure.neon.tech
       - key: DB_PORT
-        fromDatabase:
-          name: pixel-post-db
-          property: port
+        value: 5432
       - key: DB_DATABASE
-        fromDatabase:
-          name: pixel-post-db
-          property: database
+        value: neondb
       - key: DB_USERNAME
-        fromDatabase:
-          name: pixel-post-db
-          property: user
+        value: neondb_owner
       - key: DB_PASSWORD
-        fromDatabase:
-          name: pixel-post-db
-          property: password
-      - key: SESSION_SECURE_COOKIE
-        value: "false"
+        sync: false
+      - key: DB_SSLMODE
+        value: require
+      - key: DB_STATEMENT_TIMEOUT
+        value: 0
+      
+      # Session Configuration
       - key: SESSION_DRIVER
-        value: file
-      - key: APP_URL
-        value: https://pixel-post-3l7p.onrender.com
-
-databases:
-  - name: pixel-post-db
-    engine: mysql
-    version: "8.0"
-    plan: free
+        value: database
+      - key: SESSION_SECURE_COOKIE
+        value: true
+      - key: SESSION_HTTP_ONLY
+        value: true
+      - key: SESSION_SAME_SITE
+        value: lax
+      
+      # Filesystem Configuration
+      - key: FILESYSTEM_DISK
+        value: local
+      
+      # Cache Configuration
+      - key: CACHE_STORE
+        value: database
+      
+      # Queue Configuration
+      - key: QUEUE_CONNECTION
+        value: database
+      
+      # Mail Configuration
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_PORT
+        value: 465
+      - key: MAIL_FROM_ADDRESS
+        value: noreply@pixel-post.onrender.com
+      - key: MAIL_FROM_NAME
+        value: Pixel Post
